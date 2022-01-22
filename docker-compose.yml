@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: ./api
+      # only build development stage from dockerfile
+      target: development
+    volumes:
+      - ./api:/app
+      - ./app/node_modules
+      # run in debug mode: yarn start:debug
+      # run in dev mode
+    command: yarn start:dev
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5432/db
+      NODE_ENV: development
+      PORT: 5000
+    ports:
+      - 5000:5000
+      # for debugging
+      - 9229:9229
+
+  web:
+    build:
+      dockerfile: Dockerfile
+      context: ./web
+      # only build development stage from dockerfile
+      target: development
+    command: yarn start
+    volumes:
+      - ./web:/app
+      - ./app/node_modules
+    ports:
+      - 4200:4200
+    links:
+      - api
+
+  postgres:
+    image: postgres:10.4
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    ports:
+      - 35000:5432
+
+  postgres_admin:
+    image: dpage/pgadmin4:6.4
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - 5050:80
