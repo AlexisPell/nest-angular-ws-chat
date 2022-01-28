@@ -1,7 +1,7 @@
-import { LoginUserDto } from './../dto/login-user.dto';
-import { IUser } from './../model/user.interface';
+import { LoginUserDto } from '../dto/login-user.dto';
+import { IUser } from '../model/user.interface';
 import { Observable, of } from 'rxjs';
-import { CreateUserDto } from './../dto/create-user.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

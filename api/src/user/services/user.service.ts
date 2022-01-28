@@ -1,6 +1,6 @@
 import { from, map, mapTo, Observable, switchMap } from 'rxjs';
-import { IUser } from './../model/user.interface';
-import { UserEntity } from './../model/user.entity';
+import { IUser } from '../model/user.interface';
+import { UserEntity } from '../model/user.entity';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,20 +10,21 @@ import {
   paginate,
   Pagination,
 } from 'nestjs-typeorm-paginate';
+import { AuthService } from 'src/auth/services/auth.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private authService: AuthService,
   ) {}
 
   findAll(options: IPaginationOptions): Observable<Pagination<IUser>> {
     return from(paginate<UserEntity>(this.userRepository, options));
   }
 
-  // TODO: Refactor to jwt later
-  login(user: IUser): Observable<boolean> {
+  login(user: IUser): Observable<string> {
     return this.findOneByEmail(user.email).pipe(
       switchMap((foundUser: IUser) => {
         if (!foundUser)
@@ -31,14 +32,18 @@ export class UserService {
             `No user with email ${user.email} found`,
           );
 
-        return this.validatePassword(user.password, foundUser.password).pipe(
-          switchMap((matches: boolean) => {
-            if (!matches)
-              throw new BadRequestException(`Credentials are wrong`);
+        return this.authService
+          .validatePassword(user.password, foundUser.password)
+          .pipe(
+            switchMap((matches: boolean) => {
+              if (!matches)
+                throw new BadRequestException(`Credentials are wrong`);
 
-            return this.findOneById(foundUser.id).pipe(mapTo(true));
-          }),
-        );
+              return this.findOneById(foundUser.id).pipe(
+                switchMap((user: IUser) => this.authService.generateJwt(user)),
+              );
+            }),
+          );
       }),
     );
   }
@@ -51,7 +56,7 @@ export class UserService {
             `User with email ${newUser.email} already exists`,
           );
 
-        return this.hashPassword(newUser.password).pipe(
+        return this.authService.hashPassword(newUser.password).pipe(
           switchMap((passwordHash: string) => {
             // overwrite the user password with the hash
             newUser.password = passwordHash;
@@ -75,17 +80,6 @@ export class UserService {
         { select: ['id', 'email', 'username', 'password'] },
       ),
     );
-  }
-
-  private validatePassword(
-    password: string,
-    storedPassword: string,
-  ): Observable<boolean | any> {
-    return from(bcrypt.compare(password, storedPassword));
-  }
-
-  private hashPassword(password: string): Observable<string> {
-    return from<string>(bcrypt.hash(password, 10) as any);
   }
 
   private mailExists(email: string): Observable<boolean> {
