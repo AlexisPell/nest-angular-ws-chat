@@ -1,6 +1,6 @@
-import { Test, TestService } from './services/test-service/test.service';
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Test, TestService } from './services/test-service/test.service';
 
 @Component({
   selector: 'app-root',

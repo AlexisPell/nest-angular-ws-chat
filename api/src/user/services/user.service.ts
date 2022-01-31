@@ -49,23 +49,27 @@ export class UserService {
   }
 
   create(newUser: IUser): Observable<IUser> {
-    return this.mailExists(newUser.email).pipe(
-      switchMap((exists: boolean) => {
-        if (exists)
-          throw new BadRequestException(
-            `User with email ${newUser.email} already exists`,
-          );
-
-        return this.authService.hashPassword(newUser.password).pipe(
-          switchMap((passwordHash: string) => {
-            // overwrite the user password with the hash
-            newUser.password = passwordHash;
-            return from(this.userRepository.save(newUser)).pipe(
-              switchMap((user: IUser) => this.findOneById(user.id)),
-            );
-          }),
+    const onEmailExists = (exists: boolean) => {
+      if (exists)
+        throw new BadRequestException(
+          `User with such email or username already exists`,
         );
-      }),
+
+      return this.authService
+        .hashPassword(newUser.password)
+        .pipe(
+          switchMap((passwordHash: string) => onPasswordHashed(passwordHash)),
+        );
+    };
+    const onPasswordHashed = (passwordHash: string) => {
+      // overwrite the user password with the hash
+      newUser.password = passwordHash;
+      return from(this.userRepository.save(newUser)).pipe(
+        switchMap((user: IUser) => this.findOneById(user.id)),
+      );
+    };
+    return this.mailOrUserExists(newUser.email, newUser.username).pipe(
+      switchMap((exists: boolean) => onEmailExists(exists)),
     );
   }
 
@@ -82,9 +86,13 @@ export class UserService {
     );
   }
 
-  private mailExists(email: string): Observable<boolean> {
-    return from(this.userRepository.findOne({ email })).pipe(
-      map((user: IUser) => !!user),
-    );
+  private mailOrUserExists(
+    email: string,
+    username: string,
+  ): Observable<boolean> {
+    const potentialUserByEmailOrUsername = from(
+      this.userRepository.findOne({ where: [{ email }, { username }] }),
+    ).pipe(map((user: IUser) => !!user));
+    return potentialUserByEmailOrUsername;
   }
 }

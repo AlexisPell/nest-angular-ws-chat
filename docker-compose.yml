@@ -35,7 +35,7 @@ services:
     command: yarn start
     volumes:
       - ./web:/app
-      - /app/node_modules
+      # - angular_node_modules:/app/node_modules
     ports:
       - 4200:4200
     links:
@@ -64,3 +64,4 @@ services:
 
 volumes:
   pgdata:
+  # angular_node_modules:
