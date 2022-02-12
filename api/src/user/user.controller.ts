@@ -1,5 +1,5 @@
 import { JwtAuthGuard } from './../auth/guards/jwt-auth.guard';
-import { ILoginResponse } from './dto/responses/login-res-dto';
+import { ILoginResponse } from './model/login-res.interface';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UserHelperService } from './services/user-helper.service';
 import { CreateUserDto } from './dto/create-user.dto';

@@ -45,7 +45,6 @@ export class RegisterComponent implements OnInit {
   }
 
   register() {
-    console.log('register', this.form);
     if (this.form.valid) {
       console.log('valid');
       this.userService

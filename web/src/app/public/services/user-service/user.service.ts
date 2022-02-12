@@ -12,9 +12,8 @@ export class UserService {
 
   create(user: IUser): Observable<IUser> {
     return this.http.post<IUser>('/api/users', user).pipe(
-      tap((createdUser: IUser) => {
-        console.log('CREATED??? ', createdUser);
-        return this.snackbar.open(
+      tap((createdUser: IUser) =>
+        this.snackbar.open(
           `User ${createdUser.username} was successfully created`,
           'Close',
           {
@@ -22,8 +21,8 @@ export class UserService {
             horizontalPosition: 'right',
             verticalPosition: 'top',
           }
-        );
-      }),
+        )
+      ),
       catchError((e) => {
         this.snackbar.open(
           `User could not be created, due to: ${e.error.message}`,
